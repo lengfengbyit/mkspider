@@ -5,9 +5,11 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-from lib.db import session
-from lib.models import *
-from lib.common import get_weekth_by_date
+import json
+from mkspider.lib.db import session
+from mkspider.lib.models import *
+from mkspider.lib.common import get_weekth_by_date
+from xpinyin import Pinyin
 
 class MkspiderPipeline(object):
 
@@ -15,9 +17,11 @@ class MkspiderPipeline(object):
         self.spider_items = {
             'ana':  self.ana_item,
             'constellation_day': self.constellation_day_item,
-            'astro': self.astro_item
+            'astro': self.astro_item,
+            'lunar': self.lunar_item,
+            'star': self.star_item
         }
-        
+
     def close_spider(self, spider):
         pass
 
@@ -71,10 +75,29 @@ class MkspiderPipeline(object):
             session.add(astroDay)
             session.commit()
 
+    def lunar_item(self, item):
+        """ 农历数据存储 """
+
+        item['festivalList'] = ",".join(item['festivalList'])
+        item['jieqi'] = json.dumps(item['jieqi'])
+
+        lunar = Lunar(**item)
+        session.add(lunar)
+        session.commit()
+
+    def star_item(self, item):
+        """ 明星数据存储 """
+
+        p = Pinyin()
+        item['name_initial'] = p.get_initials(item['name'], '')
+        item['name_spell'] = p.get_pinyin(item['name'], '')
+
+        star = Star(**item)
+        session.add(star)
+        session.commit()
 
     def constellation_day_item(self, item):
         """ 星座运势 日数据 存储 """
         constellationDay = ConstellationDay(**item)
         session.add(constellationDay)
         session.commit()
-

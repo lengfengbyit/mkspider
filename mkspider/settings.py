@@ -92,7 +92,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 # 数据库配置
-DB_CONFIG = "mysql+pymysql://root:root@localhost:3306/maiku_api?charset=utf8"
+DB_CONFIG = "mysql+pymysql://root:root@localhost:3306/douban?charset=utf8"
+# DB_CONFIG = "mysql+pymysql://root:root@localhost:3306/maiku_api?charset=utf8"
 
 # 日志配置
 LOG_ENABLED = True

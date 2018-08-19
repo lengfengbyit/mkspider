@@ -10,12 +10,12 @@ import scrapy
 
 class Ana(scrapy.Item):
     """ 名言警句 """
-    
+
     title = scrapy.Field()
     author = scrapy.Field()
-    froms = scrapy.Field() 
-    tags = scrapy.Field() 
-    like_count = scrapy.Field() 
+    froms = scrapy.Field()
+    tags = scrapy.Field()
+    like_count = scrapy.Field()
     dislike_count = scrapy.Field()
 
 
@@ -43,6 +43,48 @@ class Astro(scrapy.Item):
     today = scrapy.Field()
     month = scrapy.Field()
     tomorrow = scrapy.Field()
+
+
+class Lunar(scrapy.Item):
+    """ 农历 """
+    year = scrapy.Field()
+    month = scrapy.Field()
+    day = scrapy.Field()
+    lunarYear = scrapy.Field()
+    lunarMonth = scrapy.Field()
+    lunarDay = scrapy.Field()
+    cnyear = scrapy.Field()
+    cnmonth = scrapy.Field()
+    cnday = scrapy.Field()
+    hyear = scrapy.Field()
+    cyclicalYear = scrapy.Field()
+    cyclicalMonth = scrapy.Field()
+    cyclicalDay = scrapy.Field()
+    suit = scrapy.Field()
+    taboo = scrapy.Field()
+    animal = scrapy.Field()
+    week = scrapy.Field()
+    festivalList = scrapy.Field()
+    jieqi = scrapy.Field()
+    maxDayInMonth = scrapy.Field()
+    leap = scrapy.Field()
+    lunarYearString = scrapy.Field()
+    bigMonth = scrapy.Field()
+
+class Star(scrapy.Item):
+    """ 明星资料 """
+    name = scrapy.Field()
+    name_initial = scrapy.Field()
+    name_spell = scrapy.Field()
+    profession = scrapy.Field()
+    area = scrapy.Field()
+    height = scrapy.Field()
+    weight = scrapy.Field()
+    birthday = scrapy.Field()
+    astro = scrapy.Field()
+    bloodtype = scrapy.Field()
+    intro = scrapy.Field()
+    avatar = scrapy.Field()
 
 class AstroDay(scrapy.Item):
     """ 星座运势 日数据 """

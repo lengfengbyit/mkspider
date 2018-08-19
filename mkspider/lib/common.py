@@ -10,7 +10,8 @@ def slog(level, msg, *args, **kwargs):
         'E': logging.ERROR
     }
 
-    msg = msg.decode('utf-8').encode('gb2312')
+    if type(msg) != str:
+        msg = msg.decode('utf-8').encode('gb2312')
 
     if level not in LEVEL_MAP:
         print(msg)
@@ -22,7 +23,7 @@ def get_weekth_by_date(date, return_type='weekth', limit='-'):
     """ 获得指定日期是第几周 """
     if not date:
         return 0
-    
+
     year, month, day = str(date).split(limit)
 
     # 返回数据格式：(2017, 52, 7)  年，年的第几周，第几周的第几天
