@@ -5,7 +5,6 @@ from mkspider.settings import DB_CONFIG
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from mkspider.lib.models import Histoday
 
 # 创建数据库引擎
 engine = create_engine(DB_CONFIG, encoding="utf-8", echo=False)

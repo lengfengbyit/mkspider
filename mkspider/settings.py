@@ -9,9 +9,13 @@
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 import sys
-reload(sys)
-# 设置默认编码为utf-8
-sys.setdefaultencoding('utf-8')
+try:
+    reload(sys)
+    # 设置默认编码为utf-8
+    sys.setdefaultencoding('utf-8')
+except Exception:
+    pass
+
 
 BOT_NAME = 'mkspider'
 

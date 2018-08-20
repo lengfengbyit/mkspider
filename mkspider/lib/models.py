@@ -126,7 +126,7 @@ class Lunar(Base):
     animal = Column(String(10))
     week = Column(String(10))
     festivalList = Column(String(100))
-    jieqi = Column(String(100))
+    jieqi = Column(String(20))
     maxDayInMonth = Column(SMALLINT)
     leap = Column(SMALLINT)
     lunarYearString = Column(String(20))

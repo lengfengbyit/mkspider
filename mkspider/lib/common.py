@@ -10,7 +10,7 @@ def slog(level, msg, *args, **kwargs):
         'E': logging.ERROR
     }
 
-    if type(msg) == str:
+    if 'decode' in msg:
         msg = msg.decode('utf-8').encode('gb2312')
 
     if level not in LEVEL_MAP:
