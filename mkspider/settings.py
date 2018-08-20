@@ -8,6 +8,10 @@
 #     https://doc.scrapy.org/en/latest/topics/settings.html
 #     https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://doc.scrapy.org/en/latest/topics/spider-middleware.html
+import sys
+reload(sys)
+# 设置默认编码为utf-8
+sys.setdefaultencoding('utf-8')
 
 BOT_NAME = 'mkspider'
 
@@ -33,7 +37,7 @@ ROBOTSTXT_OBEY = False
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -92,8 +96,7 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 # 数据库配置
-DB_CONFIG = "mysql+pymysql://root:root@localhost:3306/douban?charset=utf8"
-# DB_CONFIG = "mysql+pymysql://root:root@localhost:3306/maiku_api?charset=utf8"
+DB_CONFIG = "mysql+pymysql://root:root@localhost:3306/maiku_api?charset=utf8"
 
 # 日志配置
 LOG_ENABLED = True

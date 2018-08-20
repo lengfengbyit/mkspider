@@ -130,3 +130,14 @@ class AstroYear(scrapy.Item):
     lovel = scrapy.Field()
     money = scrapy.Field()
     date = scrapy.Field()
+
+class Weather(scrapy.Item):
+    """ 天气数据 """
+    city = scrapy.Field()
+    date = scrapy.Field()
+    forecast = scrapy.Field()
+    shidu = scrapy.Field()
+    pm25 = scrapy.Field()
+    pm10 = scrapy.Field()
+    quality = scrapy.Field()
+    wendu = scrapy.Field()

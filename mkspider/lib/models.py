@@ -149,3 +149,24 @@ class Star(Base):
     bloodtype = Column(String(10))
     intro = Column(String(500))
     avatar = Column(String(500))
+
+class Weather(Base):
+    """ 天气数据 """
+    __tablename__ = 'weather'
+    id = Column(Integer, primary_key=True)
+    date = Column(Date)
+    city = Column(String(20))
+    shidu = Column(String(10))
+    pm25 = Column(String(10))
+    pm10 = Column(String(10))
+    wendu = Column(SMALLINT)
+    sunrise = Column(String(10))
+    sunset = Column(String(10))
+    high = Column(String(20))
+    low = Column(String(20))
+    aqi = Column(SMALLINT)
+    quality = Column(String(20))
+    fx = Column(String(20))
+    fl = Column(String(20))
+    stype = Column(String(20))
+    notice = Column(String(100))

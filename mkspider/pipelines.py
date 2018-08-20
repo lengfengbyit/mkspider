@@ -8,8 +8,8 @@
 import json
 from mkspider.lib.db import session
 from mkspider.lib.models import *
-from mkspider.lib.common import get_weekth_by_date
-from xpinyin import Pinyin
+from mkspider.lib.common import get_weekth_by_date, date_operate
+# from xpinyin import Pinyin
 
 class MkspiderPipeline(object):
 
@@ -19,7 +19,8 @@ class MkspiderPipeline(object):
             'constellation_day': self.constellation_day_item,
             'astro': self.astro_item,
             'lunar': self.lunar_item,
-            'star': self.star_item
+            'star': self.star_item,
+            'weather': self.weather_item
         }
 
     def close_spider(self, spider):
@@ -95,6 +96,43 @@ class MkspiderPipeline(object):
         star = Star(**item)
         session.add(star)
         session.commit()
+
+    def weather_item(self, item):
+        """ 天气数据存储 """
+        item['date'] = str(item['date'])
+        date = '-'.join([item['date'][0:4], item['date'][4:6], item['date'][6:8]])
+        i = 0
+        for tmp in item['forecast']:
+            curr_date = date_operate(date, i)
+            i += 1
+            info = {
+                'city': item['city'],
+                'date': curr_date,
+                'shidu': item['shidu'],
+                'pm25': item['pm25'],
+                'pm10': item['pm10'],
+                'quality': item['quality'],
+                'wendu': item['wendu'],
+                'sunrise': tmp['sunrise'],
+                'sunset': tmp['sunset'],
+                'high': tmp['high'],
+                'low': tmp['low'],
+                'aqi': tmp['aqi'],
+                'fx': tmp['fx'],
+                'fl': tmp['fl'],
+                'stype': tmp['type'],
+                'notice': tmp['notice']
+            }
+            weather = Weather(**info)
+
+            # 先判断天气数据是否存在，如果存在则更新
+            # 如果不存在则新增
+            old_weather = session.query(Weather).filter_by(city=item['city']).filter_by(date=curr_date).first()
+            if old_weather:
+                session.query(Weather).filter_by(id=old_weather.id).update(info)
+            else:
+                session.add(weather)
+            session.commit()
 
     def constellation_day_item(self, item):
         """ 星座运势 日数据 存储 """

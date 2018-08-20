@@ -10,7 +10,7 @@ def slog(level, msg, *args, **kwargs):
         'E': logging.ERROR
     }
 
-    if type(msg) != str:
+    if type(msg) == str:
         msg = msg.decode('utf-8').encode('gb2312')
 
     if level not in LEVEL_MAP:
@@ -57,7 +57,11 @@ def date_operate(date, days = 1, limit='-'):
 
     return next_date.strftime('%Y{}%m{}%d'.format(limit,limit))
 
+def default_val(data, key, default_val=''):
+    """ 获取值并设置默认值 """
+    return data[key] if key in data else default_val
 
 if __name__ == '__main__':
-    date = date_operate('2018-10-10', -22)
-    print(date)
+   
+   date = date_operate('2018-08-20', 4)
+   print(date)

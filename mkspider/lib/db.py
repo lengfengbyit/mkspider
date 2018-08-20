@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 """历史上的今天数据解析脚本"""
 
-import os
-import sys
-# bin_dir = os.path.dirname(os.path.realpath(__file__))
-# root_dir = os.path.join(bin_dir, '..', 'mkspider')
-# sys.path.append(root_dir)
-
 from mkspider.settings import DB_CONFIG
 import sqlalchemy
 from sqlalchemy import create_engine
