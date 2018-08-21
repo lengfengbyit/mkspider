@@ -4,7 +4,7 @@ import scrapy, time, sys, json
 from mkspider.items import Astro
 from mkspider.lib.models import AstroYear, AstroMonth, AstroWeek, AstroDay
 from mkspider.lib.db import session
-from mkspider.lib.common import slog, get_weekth_by_date, date_operate
+from mkspider.lib.common import slog, get_weekth_by_date, date_operate, default_val
 from mkspider.settings import ASTRO_LIST
 
 
@@ -20,7 +20,7 @@ class AstroSpider(scrapy.Spider):
     # 星座id 按时间顺序 1：白羊座 12：双鱼座
     astroid = 1
     # 获得当前日期
-    date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+    date = '2016-01-01'
     year = {
         'date': 0,
         'astroid': 0
@@ -70,7 +70,8 @@ class AstroSpider(scrapy.Spider):
         star = ASTRO_LIST[self.astroid - 1]
 
         if json_data['status'] != "0":
-            slog('E', "[%s][%s]数据爬取失败, 重新爬取..." % (star, self.date))
+            msg = default_val(json_data, 'msg', '数据爬取失败, 重新爬取...')
+            slog('E', "[%s][%s]%s" % (star, self.date, msg))
             self.error_urls.append(response.url)
             sys.exit(0)
             yield scrapy.Request(self.next_url())
@@ -78,11 +79,10 @@ class AstroSpider(scrapy.Spider):
             slog('I', "[%s][%s]数据爬取成功...." % (star, self.date))
             astro = Astro(**json_data['result'])
             astro = self.data_check(astro)
-            print(astro)
             yield astro
 
         # 获得下一个请求链接
-        # yield scrapy.Request(self.next_url())
+        yield scrapy.Request(self.next_url())
         
 
     def next_url(self):

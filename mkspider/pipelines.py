@@ -20,7 +20,8 @@ class MkspiderPipeline(object):
             'astro': self.astro_item,
             'lunar': self.lunar_item,
             'star': self.star_item,
-            'weather': self.weather_item
+            'weather': self.weather_item,
+            'weather_hefeng': self.weather_item,
         }
 
     def close_spider(self, spider):
@@ -123,6 +124,11 @@ class MkspiderPipeline(object):
                 'stype': tmp['type'],
                 'notice': tmp['notice']
             }
+            if not info['pm25']:
+                del info['pm25']
+                del info['pm10']
+                del info['aqi']
+                del info['quality']
             weather = Weather(**info)
 
             # 先判断天气数据是否存在，如果存在则更新

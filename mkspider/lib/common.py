@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import logging, datetime
+import logging, datetime, time
 
 def slog(level, msg, *args, **kwargs):
     LEVEL_MAP = {
@@ -9,15 +9,14 @@ def slog(level, msg, *args, **kwargs):
         'W': logging.WARNING,
         'E': logging.ERROR
     }
-
-    if 'decode' in msg:
+   
+    if type(msg) == str:
         msg = msg.decode('utf-8').encode('gb2312')
 
     if level not in LEVEL_MAP:
         print(msg)
     else:
         logging.log(LEVEL_MAP[level], msg, *args, **kwargs)
-
 
 def get_weekth_by_date(date, return_type='weekth', limit='-'):
     """ 获得指定日期是第几周 """
@@ -41,7 +40,6 @@ def get_weekth_by_date(date, return_type='weekth', limit='-'):
     else:
         return res
 
-
 def date_operate(date, days = 1, limit='-'):
     """ 日期运算，
         date: 要计算的原始日期
@@ -61,7 +59,32 @@ def default_val(data, key, default_val=''):
     """ 获取值并设置默认值 """
     return data[key] if key in data else default_val
 
+def weather_data_check(provinces):
+    """ 天气数据检查， 返回要爬取的城市索引 """
+    from mkspider.lib.db import session
+    from mkspider.lib.models import Weather
+    
+    curr_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
+    # 查询当前日期最后一个城市名称
+    date_weather = session.query(Weather).filter_by(
+        date=curr_date).order_by(Weather.id.desc()).first()
+    if date_weather:
+        city = str(date_weather.city.decode('utf-8'))
+        # 判断当前日期是否查询
+        city_last_weather = session.query(Weather).filter_by(
+            city=city).order_by(Weather.date.desc()).first()
+        if city_last_weather and str(city_last_weather.date) == date_operate(curr_date, 4):
+            return provinces.index(city) + 1
+    return 0
+
+
 if __name__ == '__main__':
-   
-   date = date_operate('2018-08-20', 4)
-   print(date)
+    import os
+    import sys
+    bin_dir = os.path.dirname(os.path.realpath(__file__))
+    root_dir = os.path.join(bin_dir, '..', '..')
+    sys.path.append(root_dir)
+
+    from mkspider.settings import PROVINCES
+    index = weather_data_check(PROVINCES)
+    print('index: %s' % index)
