@@ -23,7 +23,7 @@ class WeatherSpider(scrapy.Spider):
         self.index = weather_data_check(self.provinces)
         if self.index >= len(self.provinces):
             slog("D", "今日天气数据已爬取完毕")
-            exit(0)
+            return []
         return [scrapy.Request(self.next_url())]
 
     def parse(self, response):

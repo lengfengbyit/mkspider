@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import logging, datetime, time
+import logging, datetime, time, os
 
 def slog(level, msg, *args, **kwargs):
     LEVEL_MAP = {
@@ -10,8 +10,8 @@ def slog(level, msg, *args, **kwargs):
         'E': logging.ERROR
     }
    
-    if type(msg) == str:
-        msg = msg.decode('utf-8').encode('gb2312')
+    # if type(msg) == str and os.name == 'nt':
+    #     msg = msg.decode('utf-8').encode('gb2312')
 
     if level not in LEVEL_MAP:
         print(msg)
@@ -77,6 +77,16 @@ def weather_data_check(provinces):
             return provinces.index(city) + 1
     return 0
 
+def date2str(arr):
+    """对象转字符串"""
+    for item in arr:
+        for field in item:
+            if isinstance(item[field], datetime.datetime):
+                item[field] = item[field].strftime('%Y-%m-%d %H:%M:%S')
+            elif isinstance(item[field], datetime.date):
+                item[field] = item[field].strftime("%Y-%m-%d")
+
+    return arr
 
 if __name__ == '__main__':
     import os

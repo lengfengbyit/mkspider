@@ -3,8 +3,8 @@
 import scrapy, time, sys, json
 from mkspider.items import Astro
 from mkspider.lib.models import AstroYear, AstroMonth, AstroWeek, AstroDay
-from mkspider.lib.db import session
-from mkspider.lib.common import slog, get_weekth_by_date, date_operate, default_val
+from mkspider.lib.db import session, engine
+from mkspider.lib.common import slog, get_weekth_by_date, date_operate, default_val, date2str
 from mkspider.settings import ASTRO_LIST
 
 
@@ -52,6 +52,10 @@ class AstroSpider(scrapy.Spider):
     custom_settings = {'CONCURRENT_REQUESTS': 10}
    
     def start_requests(self):
+        
+        # 初始化爬取链接
+        self.init_start_urls()
+   
         # 查询数据库中最后日期的星座数据
         lastDayAstro = session.query(AstroDay).order_by(
             AstroDay.date.desc()).order_by(AstroDay.astroid.desc()).first()
@@ -166,8 +170,6 @@ class AstroSpider(scrapy.Spider):
 
     def get_appkey(self):
         """ 获得appkey """
-        self.get_appkey_index += 1
-        slog('D', '获得appkey:%s' % self.get_appkey_index)
         for appkey,count in self.appkeys.items():
             if count < 100:
                 self.appkeys[appkey] += 1
@@ -175,3 +177,28 @@ class AstroSpider(scrapy.Spider):
                 break
 
         return False
+
+    def init_start_urls(self):
+        """ 获得遗漏的星座和日期，添加到start_urls中 """
+        sql = """
+            SELECT `date`, COUNT(*) c FROM astro_day
+            GROUP BY `date`
+            HAVING c < 12
+            ORDER BY c DESC
+        """
+        # 所有的星座id
+        astroids = set(range(1, 13))
+        result = engine.execute(sql).fetchall()
+        for date,count  in result:
+            date = date.strftime('%Y-%m-%d')
+            # 获得该日期下的所有星座id
+            res = session.query(AstroDay.astroid).filter_by(date=date).all()
+            astroids_date = set(map(lambda x: x[0], res))
+            # 求差集, 得到遗漏的星座id
+            astroids_diff = list(astroids - astroids_date)
+            # 同个星座id和日期构造请求链接
+            for astroid in astroids_diff:
+                self.astroid = astroid - 1
+                self.date = date
+                url = self.next_url()
+                self.start_urls.append(url)

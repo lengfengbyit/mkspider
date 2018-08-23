@@ -29,7 +29,7 @@ class WeatherHefengSpider(scrapy.Spider):
         self.index = weather_data_check(self.provinces)
         if self.index >= len(self.provinces):
             slog("D", "今日天气数据已爬取完毕")
-            exit(0)
+            return []
     
         # 初始化天气类型数据
         self.init_types()
