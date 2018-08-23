@@ -4,7 +4,7 @@ import scrapy, json
 from mkspider.lib.db import session
 from mkspider.lib.models import Weather
 from mkspider.items import Weather as WeatherItem
-from mkspider.lib.common import slog, date_operate, default_val, weather_data_check
+from mkspider.lib.common import date_operate, default_val, weather_data_check
 from mkspider.settings import PROVINCES
 
 class WeatherHefengSpider(scrapy.Spider):
@@ -28,7 +28,7 @@ class WeatherHefengSpider(scrapy.Spider):
     def start_requests(self):
         self.index = weather_data_check(self.provinces)
         if self.index >= len(self.provinces):
-            slog("D", "今日天气数据已爬取完毕")
+            self.logger.info("今日天气数据已爬取完毕")
             return []
     
         # 初始化天气类型数据
@@ -40,10 +40,10 @@ class WeatherHefengSpider(scrapy.Spider):
         json_data = json_data['HeWeather6'][0]
         city = self.provinces[self.index]
         if not json_data or json_data['status'] != 'ok':
-            slog('E', '[%s]天气信息爬取失败' % city)
-            exit(0)
+            self.logger.error('[%s]天气信息爬取失败' % city)
+            return
 
-        slog("D", "[%s]天气信息爬取成功" % city)
+        self.logger.debug("[%s]天气信息爬取成功" % city)
 
         # 未来5天的列表数据
         forecast = []

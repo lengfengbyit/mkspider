@@ -4,7 +4,7 @@ import scrapy, time, sys, json
 from mkspider.items import Astro
 from mkspider.lib.models import AstroYear, AstroMonth, AstroWeek, AstroDay
 from mkspider.lib.db import session, engine
-from mkspider.lib.common import slog, get_weekth_by_date, date_operate, default_val, date2str
+from mkspider.lib.common import get_weekth_by_date, date_operate, default_val, date2str
 from mkspider.settings import ASTRO_LIST
 
 
@@ -91,7 +91,7 @@ class AstroSpider(scrapy.Spider):
         if start_url:
             return [scrapy.Request(start_url)]
         else:
-            slog('E', '不存在可用的appkey')
+            self.logger.error('不存在可用的appkey')
             return []
 
     def parse(self, response):
@@ -102,21 +102,29 @@ class AstroSpider(scrapy.Spider):
         is_end = False
         
         if json_data['status'] != "0":
+
             msg = default_val(json_data, 'msg', '数据爬取失败, 重新爬取...')
-            slog('E', "[%s][%s]%s" % (star, self.date, msg))
+            log = "[{}][{}]{}".format(star, self.date, msg)
+            self.logger.error(log)
+
             old_appkey = response.url[-16:]
             self.appkeys[old_appkey] = 100
+
             # 爬取失败，更换appkey继续爬取
             appkey = self.get_appkey()
             if appkey:
+
                 # 当前url更换appkey
                 url = '%s%s' % (response.url[:-16], appkey) 
-                slog('I', '更换appkey继续爬取,appkey为:%s' % appkey)
-                yield scrapy.Request(url)
-            else:
+                self.logger.info('更换appkey继续爬取,appkey为:%s' % appkey)
+
+                # 设置该请求的优先级为100, 一般该参数的默认值为0，
+                # 数值越大，越先执行
+                yield scrapy.Request(url, priority=100)
+            else:       
                 is_end = True
         else:
-            slog('I', "[%s][%s]数据爬取成功...." % (star, self.date))
+            self.logger.info("[%s][%s]数据爬取成功...." % (star, self.date))
             astro = Astro(**json_data['result'])
             yield astro
 
@@ -137,7 +145,7 @@ class AstroSpider(scrapy.Spider):
             return False
         # appkey = self.appkeys[self.appkey_index]
         url = self.start_urls[0] % (self.astroid, self.date, appkey)
-        slog('D', "爬取URL:%s" % url)
+        self.logger.debug("爬取URL:%s" % url)
         return url
 
     def data_check(self, astro):

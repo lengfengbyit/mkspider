@@ -3,7 +3,6 @@
 
 import scrapy, json
 from mkspider.items import Ana
-import logging, sys
 
 
 class AnaSpider(scrapy.Spider):
@@ -18,7 +17,7 @@ class AnaSpider(scrapy.Spider):
     totalPage = 4956
     
     def parse(self, response):
-        logging.info('------curr page:%s' % self.page)
+        self.logger.info('------curr page:%s' % self.page)
         json_data = json.loads(response.body)
         if 'ret_array' in json_data:
             for item in json_data['ret_array']:
@@ -35,10 +34,9 @@ class AnaSpider(scrapy.Spider):
                     ana['like_count'] = int(item['like_count'])
                     ana['dislike_count'] = int(item['dislike_count'])
                 except Exception as e:
-                    logging.error(str(e))
-                    print(item)
-                    sys.exit(0)
-                    continue
+                    self.logger.error(str(e))
+                    self.logger.error(item)
+                    return
                 yield ana 
         
         self.page += 1

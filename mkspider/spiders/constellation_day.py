@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """ 星座运势 日数据 爬取 """
-import scrapy, logging, json,sys, time
+import scrapy, logging, json, time
 from mkspider.settings import ASTRO_LIST
 from mkspider.items import ConstellationDay
-from mkspider.lib.common import slog
 
 class ConstellationDaySpider(scrapy.Spider):
     name = 'constellation_day'
@@ -18,12 +17,12 @@ class ConstellationDaySpider(scrapy.Spider):
 
     def parse(self, response):
         
-        slog("I","-----------[%s]数据爬取" % ASTRO_LIST[self.index])
+        self.logger.info("-----------[%s]数据爬取" % ASTRO_LIST[self.index])
        
         json_data = json.loads(response.body)
         if json_data['error_code'] != 0:
-            slog('E','数据爬取出错')
-            sys.exit(0)
+            self.logger.error('数据爬取出错')
+            return
 
         try:
             date = json_data['date']
@@ -34,9 +33,9 @@ class ConstellationDaySpider(scrapy.Spider):
             del json_data['datetime']
             del json_data['resultcode']
         except Exception as e:
-            slog('E', str(e))
-            slog('E', json.dumps(json_data))
-            sys.exit(0)
+            self.logger.error(str(e))
+            self.logger.error(json_data)
+            return
 
         date = time.strftime(
             "%Y-%m-%d", time.strptime(str(date), "%Y%m%d"))

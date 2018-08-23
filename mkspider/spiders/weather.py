@@ -2,7 +2,7 @@
 # 天气爬虫
 import scrapy, json
 from mkspider.items import Weather as WeatherItem
-from mkspider.lib.common import slog, date_operate, default_val, weather_data_check
+from mkspider.lib.common import date_operate, default_val, weather_data_check
 from mkspider.settings  import PROVINCES
 
 
@@ -22,7 +22,7 @@ class WeatherSpider(scrapy.Spider):
     def start_requests(self):
         self.index = weather_data_check(self.provinces)
         if self.index >= len(self.provinces):
-            slog("D", "今日天气数据已爬取完毕")
+            self.logger.info("今日天气数据已爬取完毕")
             return []
         return [scrapy.Request(self.next_url())]
 
@@ -31,10 +31,11 @@ class WeatherSpider(scrapy.Spider):
         json_data = json.loads(response.body)
         city = self.provinces[self.index]
         if not json_data or json_data['status'] != 200:
-            slog('E', '[%s]天气信息爬取失败' % city)
-            exit(0)
+            self.logger.error('[%s]天气信息爬取失败' % city)
+            return
         
-        slog("D", "[%s]天气信息爬取成功" % city)
+        self.logger.debug("[%s]天气信息爬取成功" % city)
+        
         weather_item = WeatherItem(
             city = json_data['city'],
             date = json_data['date'],

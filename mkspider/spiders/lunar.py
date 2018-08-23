@@ -3,7 +3,7 @@
 import scrapy, time, json
 from mkspider.lib.models import Lunar
 from mkspider.lib.db import session
-from mkspider.lib.common import slog, date_operate
+from mkspider.lib.common import date_operate
 from mkspider.items import Lunar as LunarItem
 
 
@@ -35,9 +35,9 @@ class LunarSpider(scrapy.Spider):
         json_data = json.loads(response.body)
 
         if not json_data or json_data['status'] != 200:
-            slog('D', '[%s]数据爬取失败....' % self.date)
-            print(json_data)
-            exit(0)
+            self.logger.error('[%s]数据爬取失败....' % self.date)
+            self.logger.error(json_data)
+            return
         else:
             lunarItem = LunarItem(**json_data['data'])
             yield lunarItem
