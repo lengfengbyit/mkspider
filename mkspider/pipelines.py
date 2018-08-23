@@ -41,22 +41,35 @@ class MkspiderPipeline(object):
     def astro_item(self, item):
         """ 星座运势 数据存储 """
         if item['year']:
-            item['year']['name'] = item['astroname']
-            item['year']['astroid'] = item['astroid']
+            res = session.query(AstroYear).filter_by(
+                astroid=item['astroid']).filter_by(date=item['year']['date']).first()
+            
+            if not res:
+                item['year']['name'] = item['astroname']
+                item['year']['astroid'] = item['astroid']
 
-            astroYear = AstroYear(**item['year'])
-            session.add(astroYear)
-            session.commit()
+                astroYear = AstroYear(**item['year'])
+                session.add(astroYear)
+                session.commit()
+            
         if item['month']:
-            item['month']['name'] = item['astroname']
-            item['month']['astroid'] = item['astroid']
+
             year, month = item['month']['date'].split('-')
             item['month']['date'] = "{}{}".format(year, str(month).zfill(2))
 
-            astroMonth = AstroMonth(**item['month'])
-            session.add(astroMonth)
-            session.commit()
-        if item['week']:
+            res = session.query(AstroMonth).filter_by(
+                astroid=item['astroid']).filter_by(date=item['month']['date']).first()
+            if not res:
+                item['month']['name'] = item['astroname']
+                item['month']['astroid'] = item['astroid']
+
+                astroMonth = AstroMonth(**item['month'])
+                session.add(astroMonth)
+                session.commit()
+                
+
+        if item['week'] and False:
+
             item['week']['name'] = item['astroname']
             item['week']['astroid'] = item['astroid']
             item['week']['weekth'] = get_weekth_by_date(item['today']['date'])
@@ -65,17 +78,26 @@ class MkspiderPipeline(object):
             item['week']['start_date'] = start_date
             item['week']['end_date'] = end_date
             del item['week']['date']
-
+            
             astroWeek = AstroWeek(**item['week'])
             session.add(astroWeek)
             session.commit()
+            
         if item['today']:
+            
+            res = session.query(AstroDay).filter_by(
+                astroid=item['astroid']).filter_by(date=item['today']['date']).first()
+
             item['today']['name'] = item['astroname']
             item['today']['astroid'] = item['astroid']
-
-            astroDay = AstroDay(**item['today'])
-            session.add(astroDay)
-            session.commit()
+            
+            try:
+                astroDay = AstroDay(**item['today'])
+                session.add(astroDay)
+                session.commit()
+            except Exception:
+                pass
+            
 
     def lunar_item(self, item):
         """ 农历数据存储 """

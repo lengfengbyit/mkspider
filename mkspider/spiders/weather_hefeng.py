@@ -68,7 +68,7 @@ class WeatherHefengSpider(scrapy.Spider):
                 'low':item['tmp_min'],
                 'aqi': '',
                 'fx': item['wind_dir'],
-                'fl': item['wind_sc'],
+                'fl': '<{}级'.format(item['wind_sc'].split('-')[1]),
                 'type': item['cond_txt_d'],
                 'notice': default_val(self.types, item['cond_txt_d'], json_data['lifestyle'][0]['txt']),
             }

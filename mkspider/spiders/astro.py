@@ -12,10 +12,31 @@ class AstroSpider(scrapy.Spider):
     name = 'astro'
     allowed_domains = ['api.jisuapi.com']
     start_urls = [
-        'http://api.jisuapi.com/astro/fortune?astroid=%s&date=%s&appkey=c4a1884edcc9cd42']
+        'http://api.jisuapi.com/astro/fortune?astroid=%s&date=%s&appkey=%s']
 
-    # 爬取失败的url
-    error_urls = []
+    # 聚合数据app key
+    # appkeys = [
+    #     'c4a1884edcc9cd42',  # lengfengbyit
+    #     '400160c5118b2eaa',  # 13458672106
+    #     'd1192a8a9cc0ed6d',  # 17089596845
+    #     '717f6791d371967a',  # 17156482110
+    #     'c4970c4dfc7bdc43',  # 17044764762
+    #     'dc821167ab04f1c5',  # 17078048821
+    #     '9b1d5862954c2d57',  # 17174738820
+    # ]
+
+    appkeys = {
+        'c4a1884edcc9cd42': 0,
+        '400160c5118b2eaa': 0,
+        'd1192a8a9cc0ed6d': 0,
+        '717f6791d371967a': 0,
+        'c4970c4dfc7bdc43': 0,
+        'dc821167ab04f1c5': 0,
+        '9b1d5862954c2d57': 0,
+    }
+
+    # 默认使用appkey的索引
+    appkey_index = 0
     
     # 星座id 按时间顺序 1：白羊座 12：双鱼座
     astroid = 1
@@ -28,24 +49,25 @@ class AstroSpider(scrapy.Spider):
     weekth = year.copy()
     month = year.copy()
 
+    custom_settings = {'CONCURRENT_REQUESTS': 10}
    
     def start_requests(self):
         # 查询数据库中最后日期的星座数据
         lastDayAstro = session.query(AstroDay).order_by(
             AstroDay.date.desc()).order_by(AstroDay.astroid.desc()).first()
         if lastDayAstro:
+            self.date = lastDayAstro.date.strftime("%Y-%m-%d")
             if lastDayAstro.astroid == 12:
-                self.date = date_operate(lastDayAstro.date, 1)
+                self.date = date_operate(self.date, 1)
             else:
-                self.date = lastDayAstro.date.strftime("%Y-%m-%d")
                 self.astroid = lastDayAstro.astroid + 1
     
         # 查询最后一条周数据
-        lastWeekAstro = session.query(AstroWeek).order_by(
+        """ lastWeekAstro = session.query(AstroWeek).order_by(
             AstroWeek.weekth.desc()).order_by(AstroWeek.astroid.desc()).first()
         if lastWeekAstro:
             self.weekth['date'] = lastWeekAstro.weekth
-            self.weekth['astroid'] = lastWeekAstro.astroid
+            self.weekth['astroid'] = lastWeekAstro.astroid """
 
         #查询最后一条月数据
         lastMonthAstro = session.query(AstroMonth).order_by(
@@ -59,30 +81,44 @@ class AstroSpider(scrapy.Spider):
         if lastYearAstro:
             self.year['date'] = lastYearAstro.date
             self.year['astroid'] = lastYearAstro.astroid
-        start_url = self.start_urls[0] % (self.astroid, self.date)
-        slog('D', "初始化URL:%s" % start_url)
-        return [scrapy.Request(start_url)]
         
+        self.astroid -= 1
+        start_url = self.next_url()
+        if start_url:
+            return [scrapy.Request(start_url)]
+        else:
+            slog('E', '不存在可用的appkey')
+            return []
 
     def parse(self, response):
-        
+      
         json_data = json.loads(response.body)
         star = ASTRO_LIST[self.astroid - 1]
-
+        # 标志是否爬取结束
+        is_end = False
+        
         if json_data['status'] != "0":
             msg = default_val(json_data, 'msg', '数据爬取失败, 重新爬取...')
             slog('E', "[%s][%s]%s" % (star, self.date, msg))
-            self.error_urls.append(response.url)
-            sys.exit(0)
-            yield scrapy.Request(self.next_url())
+            old_appkey = response.url[-16:]
+            self.appkeys[old_appkey] = 100
+            # 爬取失败，更换appkey继续爬取
+            appkey = self.get_appkey()
+            if appkey:
+                # 当前url更换appkey
+                url = '%s%s' % (response.url[:-16], appkey) 
+                slog('I', '更换appkey继续爬取,appkey为:%s' % appkey)
+                yield scrapy.Request(url)
+            else:
+                is_end = True
         else:
             slog('I', "[%s][%s]数据爬取成功...." % (star, self.date))
             astro = Astro(**json_data['result'])
-            astro = self.data_check(astro)
             yield astro
 
-        # 获得下一个请求链接
-        yield scrapy.Request(self.next_url())
+        if not is_end:
+            # 获得下一个请求链接
+            yield scrapy.Request(self.next_url())
         
 
     def next_url(self):
@@ -92,7 +128,11 @@ class AstroSpider(scrapy.Spider):
             self.astroid = 1
             self.date = date_operate(self.date, 1)
         
-        url = self.start_urls[0] % (self.astroid, self.date)
+        appkey = self.get_appkey()
+        if not appkey:
+            return False
+        # appkey = self.appkeys[self.appkey_index]
+        url = self.start_urls[0] % (self.astroid, self.date, appkey)
         slog('D', "爬取URL:%s" % url)
         return url
 
@@ -123,3 +163,15 @@ class AstroSpider(scrapy.Spider):
             self.weekth['astroid'] = self.astroid
 
         return astro
+
+    def get_appkey(self):
+        """ 获得appkey """
+        self.get_appkey_index += 1
+        slog('D', '获得appkey:%s' % self.get_appkey_index)
+        for appkey,count in self.appkeys.items():
+            if count < 100:
+                self.appkeys[appkey] += 1
+                return appkey
+                break
+
+        return False
