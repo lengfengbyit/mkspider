@@ -5,7 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-import json
+import json,re
 from mkspider.lib.db import session
 from mkspider.lib.models import *
 from mkspider.lib.common import get_weekth_by_date, date_operate
@@ -138,8 +138,8 @@ class MkspiderPipeline(object):
                 'wendu': item['wendu'],
                 'sunrise': tmp['sunrise'],
                 'sunset': tmp['sunset'],
-                'high': tmp['high'],
-                'low': tmp['low'],
+                'high': re.sub('[^\.|\d]', '', tmp['high']), # 只保留数字部分
+                'low': re.sub('[^\.|\d]', '', tmp['low']),
                 'aqi': tmp['aqi'],
                 'fx': tmp['fx'],
                 'fl': tmp['fl'],

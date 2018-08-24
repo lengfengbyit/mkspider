@@ -88,13 +88,38 @@ def date2str(arr):
 
     return arr
 
-if __name__ == '__main__':
-    import os
-    import sys
-    bin_dir = os.path.dirname(os.path.realpath(__file__))
-    root_dir = os.path.join(bin_dir, '..', '..')
-    sys.path.append(root_dir)
+def send_email(title, content, logger=None):
+    """ 发送邮件 """
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.header import Header
 
-    from mkspider.settings import PROVINCES
-    index = weather_data_check(PROVINCES)
-    print('index: %s' % index)
+    # 发送邮箱
+    sender = '1019912599@qq.com'
+    # 接收邮箱，可以是多个
+    receivers = ['1348207308@qq.com']
+
+    # 发送邮件服务器
+    mail_host = 'smtp.qq.com'
+    mail_user = sender
+    mail_pass = 'gcqgfvefuwlvbcha'
+
+    # 三个参数：第一个为文本内容，第二个设置文本格式，第三个utf-8编码
+    message = MIMEText(content, 'plain', 'utf-8')
+    message['From'] = Header('mkspider', 'utf-8') # 发送者名称
+    message['To'] = Header('lengfeng', 'utf-8')   # 接收者名称
+    message['Subject'] = Header(title, 'utf-8')   # 标题
+
+    try:
+        smtpObj = smtplib.SMTP()
+        smtpObj.connect(mail_host, 25)
+        smtpObj.login(mail_user, mail_pass)
+        smtpObj.sendmail(sender, receivers, message.as_string())
+        if logger:
+            logger.info('%s:邮件发送成功' % title)
+    except smtplib.SMTPException:
+        if logger:
+            logger.error('%s:邮件发送失败' % title)
+
+if __name__ == '__main__':
+   send_email('测试邮件', '测试内容.....')

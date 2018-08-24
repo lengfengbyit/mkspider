@@ -87,6 +87,10 @@ class WeatherHefengSpider(scrapy.Spider):
         if self.index < len(self.provinces):
             yield scrapy.Request(self.next_url())
 
+    def closed(self, reason):
+        """ 爬虫结束时发送邮件 """
+        send_email('spider name: %s' % self.name, reason, self.logger)
+        
     def next_url(self):
         return self.start_urls[0] % self.provinces[self.index]
 

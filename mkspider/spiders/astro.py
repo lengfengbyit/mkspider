@@ -122,6 +122,11 @@ class AstroSpider(scrapy.Spider):
             # 获得下一个请求链接
             yield scrapy.Request(next_url)
 
+    def closed(self, reason):
+        """ 爬虫结束时发送邮件 """
+        send_email('spider name: %s' % self.name, reason, self.logger)
+
+
     def next_url(self):
         """ 获得下一个url """
         self.astroid += 1
