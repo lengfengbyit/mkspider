@@ -19,6 +19,9 @@ class WeatherSpider(scrapy.Spider):
     # 爬虫配置，下载延迟5秒
     custom_settings = {'DOWNLOAD_DELAY': 5}
 
+    # 记录请求次数
+    request_count = 0
+
     def start_requests(self):
         self.index = weather_data_check(self.provinces)
         if self.index >= len(self.provinces):
@@ -28,14 +31,19 @@ class WeatherSpider(scrapy.Spider):
 
     def parse(self, response):
         
+        # 一共34个城市，最多请求50次
+        request_count += 1
+        if request_count >= 50:
+            return
+
         json_data = json.loads(response.body)
         city = self.provinces[self.index]
         if not json_data or json_data['status'] != 200:
-            self.logger.error('[%s]天气信息爬取失败' % city)
-            return
+            self.logger.error('[%s]天气信息爬取失败,重新爬取' % city)
+            yield scrapy.Request(response.url, priority=100)
         
         self.logger.debug("[%s]天气信息爬取成功" % city)
-        
+
         weather_item = WeatherItem(
             city = json_data['city'],
             date = json_data['date'],
