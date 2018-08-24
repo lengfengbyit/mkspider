@@ -15,24 +15,14 @@ class AstroSpider(scrapy.Spider):
         'http://api.jisuapi.com/astro/fortune?astroid=%s&date=%s&appkey=%s']
 
     # 聚合数据app key
-    # appkeys = [
-    #     'c4a1884edcc9cd42',  # lengfengbyit
-    #     '400160c5118b2eaa',  # 13458672106
-    #     'd1192a8a9cc0ed6d',  # 17089596845
-    #     '717f6791d371967a',  # 17156482110
-    #     'c4970c4dfc7bdc43',  # 17044764762
-    #     'dc821167ab04f1c5',  # 17078048821
-    #     '9b1d5862954c2d57',  # 17174738820
-    # ]
-
     appkeys = {
-        'c4a1884edcc9cd42': 0,
-        '400160c5118b2eaa': 0,
-        'd1192a8a9cc0ed6d': 0,
-        '717f6791d371967a': 0,
-        'c4970c4dfc7bdc43': 0,
-        'dc821167ab04f1c5': 0,
-        '9b1d5862954c2d57': 0,
+        'c4a1884edcc9cd42': 0,  # lengfengbyit  
+        '400160c5118b2eaa': 0,  # 13458672106
+        'd1192a8a9cc0ed6d': 0,  # 17089596845
+        '717f6791d371967a': 0,  # 17156482110
+        'c4970c4dfc7bdc43': 0,  # 17044764762
+        'dc821167ab04f1c5': 0,  # 17078048821
+        '9b1d5862954c2d57': 0,  # 17174738820
     }
 
     # 默认使用appkey的索引
@@ -48,14 +38,12 @@ class AstroSpider(scrapy.Spider):
     }
     weekth = year.copy()
     month = year.copy()
-
-    custom_settings = {'CONCURRENT_REQUESTS': 10}
    
     def start_requests(self):
         
         # 初始化爬取链接
-        self.init_start_urls()
-   
+        # self.init_start_urls()
+        
         # 查询数据库中最后日期的星座数据
         lastDayAstro = session.query(AstroDay).order_by(
             AstroDay.date.desc()).order_by(AstroDay.astroid.desc()).first()
@@ -95,16 +83,17 @@ class AstroSpider(scrapy.Spider):
             return []
 
     def parse(self, response):
-      
-        json_data = json.loads(response.body)
-        star = ASTRO_LIST[self.astroid - 1]
+
         # 标志是否爬取结束
         is_end = False
-        
+      
+        json_data = json.loads(response.body)
+        star, date = self.get_star_and_date_by_url(response.url)
+
         if json_data['status'] != "0":
 
             msg = default_val(json_data, 'msg', '数据爬取失败, 重新爬取...')
-            log = "[{}][{}]{}".format(star, self.date, msg)
+            log = "[{}][{}]{}".format(star, date, msg)
             self.logger.error(log)
 
             old_appkey = response.url[-16:]
@@ -124,14 +113,14 @@ class AstroSpider(scrapy.Spider):
             else:       
                 is_end = True
         else:
-            self.logger.info("[%s][%s]数据爬取成功...." % (star, self.date))
+            self.logger.info("[%s][%s]数据爬取成功...." % (star, date))
             astro = Astro(**json_data['result'])
             yield astro
 
-        if not is_end:
+        next_url = self.next_url()
+        if not is_end and next_url:
             # 获得下一个请求链接
-            yield scrapy.Request(self.next_url())
-        
+            yield scrapy.Request(next_url)
 
     def next_url(self):
         """ 获得下一个url """
@@ -182,7 +171,6 @@ class AstroSpider(scrapy.Spider):
             if count < 100:
                 self.appkeys[appkey] += 1
                 return appkey
-                break
 
         return False
 
@@ -210,3 +198,19 @@ class AstroSpider(scrapy.Spider):
                 self.date = date
                 url = self.next_url()
                 self.start_urls.append(url)
+
+        res = []
+        for url in self.start_urls:
+            if self.start_urls.index(url) == 0:
+                continue
+            yield scrapy.Request(url)
+        #     res.append(scrapy.Request(url))
+        # return res
+
+    def get_star_and_date_by_url(self, url):
+        """ 获得链接中的星座和日期 """
+        tmp = url.split('astroid=')[1]
+        astroid = tmp.split('&')[0]
+        tmp = url.split('date=')[1]
+        date = tmp.split('&')[0]
+        return ASTRO_LIST[int(astroid) - 1], date
