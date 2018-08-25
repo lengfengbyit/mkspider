@@ -6,9 +6,10 @@ from mkspider.lib.models import AstroYear, AstroMonth, AstroWeek, AstroDay
 from mkspider.lib.db import session, engine
 from mkspider.lib.common import get_weekth_by_date, date_operate, default_val, date2str
 from mkspider.settings import ASTRO_LIST
+from mkspider.spiders import base
 
 
-class AstroSpider(scrapy.Spider):
+class AstroSpider(base.BaseSpider):
     name = 'astro'
     allowed_domains = ['api.jisuapi.com']
     start_urls = [
@@ -16,7 +17,7 @@ class AstroSpider(scrapy.Spider):
 
     # 聚合数据app key
     appkeys = {
-        'c4a1884edcc9cd42': 0,  # lengfengbyit  
+        'c4a1884edcc9cd42': 0,  # lengfengbyit
         '400160c5118b2eaa': 0,  # 13458672106
         'd1192a8a9cc0ed6d': 0,  # 17089596845
         '717f6791d371967a': 0,  # 17156482110
@@ -27,7 +28,7 @@ class AstroSpider(scrapy.Spider):
 
     # 默认使用appkey的索引
     appkey_index = 0
-    
+
     # 星座id 按时间顺序 1：白羊座 12：双鱼座
     astroid = 1
     # 获得当前日期
@@ -38,12 +39,12 @@ class AstroSpider(scrapy.Spider):
     }
     weekth = year.copy()
     month = year.copy()
-   
+
     def start_requests(self):
-        
+
         # 初始化爬取链接
         # self.init_start_urls()
-        
+
         # 查询数据库中最后日期的星座数据
         lastDayAstro = session.query(AstroDay).order_by(
             AstroDay.date.desc()).order_by(AstroDay.astroid.desc()).first()
@@ -53,7 +54,7 @@ class AstroSpider(scrapy.Spider):
                 self.date = date_operate(self.date, 1)
             else:
                 self.astroid = lastDayAstro.astroid + 1
-    
+
         # 查询最后一条周数据
         """ lastWeekAstro = session.query(AstroWeek).order_by(
             AstroWeek.weekth.desc()).order_by(AstroWeek.astroid.desc()).first()
@@ -67,13 +68,13 @@ class AstroSpider(scrapy.Spider):
         if lastMonthAstro:
             self.month['date'] = lastMonthAstro.date
             self.month['astroid'] = lastMonthAstro.astroid
-      
+
         # 查询最后一条年数据
         lastYearAstro = session.query(AstroYear).order_by(AstroYear.date.desc()).order_by(AstroYear.astroid.desc()).first()
         if lastYearAstro:
             self.year['date'] = lastYearAstro.date
             self.year['astroid'] = lastYearAstro.astroid
-        
+
         self.astroid -= 1
         start_url = self.next_url()
         if start_url:
@@ -86,7 +87,7 @@ class AstroSpider(scrapy.Spider):
 
         # 标志是否爬取结束
         is_end = False
-      
+
         json_data = json.loads(response.body)
         star, date = self.get_star_and_date_by_url(response.url)
 
@@ -104,13 +105,13 @@ class AstroSpider(scrapy.Spider):
             if appkey:
 
                 # 当前url更换appkey
-                url = '%s%s' % (response.url[:-16], appkey) 
+                url = '%s%s' % (response.url[:-16], appkey)
                 self.logger.info('更换appkey继续爬取,appkey为:%s' % appkey)
 
                 # 设置该请求的优先级为100, 一般该参数的默认值为0，
                 # 数值越大，越先执行
                 yield scrapy.Request(url, priority=100)
-            else:       
+            else:
                 is_end = True
         else:
             self.logger.info("[%s][%s]数据爬取成功...." % (star, date))
@@ -122,18 +123,13 @@ class AstroSpider(scrapy.Spider):
             # 获得下一个请求链接
             yield scrapy.Request(next_url)
 
-    def closed(self, reason):
-        """ 爬虫结束时发送邮件 """
-        send_email('spider name: %s' % self.name, reason, self.logger)
-
-
     def next_url(self):
         """ 获得下一个url """
         self.astroid += 1
         if self.astroid > 12:
             self.astroid = 1
             self.date = date_operate(self.date, 1)
-        
+
         appkey = self.get_appkey()
         if not appkey:
             return False
@@ -161,7 +157,7 @@ class AstroSpider(scrapy.Spider):
         else:
             self.month['date'] = month
             self.month['astroid'] = self.astroid
-     
+
         if self.weekth['date'] >= weekth and self.astroid <= self.weekth['astroid']:
             astro['week'] = False
         else:

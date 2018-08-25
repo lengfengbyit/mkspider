@@ -9,7 +9,7 @@ def slog(level, msg, *args, **kwargs):
         'W': logging.WARNING,
         'E': logging.ERROR
     }
-   
+
     # if type(msg) == str and os.name == 'nt':
     #     msg = msg.decode('utf-8').encode('gb2312')
 
@@ -63,13 +63,15 @@ def weather_data_check(provinces):
     """ 天气数据检查， 返回要爬取的城市索引 """
     from mkspider.lib.db import session
     from mkspider.lib.models import Weather
-    
+
     curr_date = time.strftime('%Y-%m-%d', time.localtime(time.time()))
     # 查询当前日期最后一个城市名称
     date_weather = session.query(Weather).filter_by(
         date=curr_date).order_by(Weather.id.desc()).first()
     if date_weather:
-        city = str(date_weather.city.decode('utf-8'))
+        city = date_weather.city
+        if type(city) != str:
+            city = str( city.decode('utf-8'))
         # 判断当前日期是否查询
         city_last_weather = session.query(Weather).filter_by(
             city=city).order_by(Weather.date.desc()).first()
@@ -122,4 +124,4 @@ def send_email(title, content, logger=None):
             logger.error('%s:邮件发送失败' % title)
 
 if __name__ == '__main__':
-   send_email('测试邮件', '测试内容.....')
+    send_email('测试邮件', '测试内容.....')

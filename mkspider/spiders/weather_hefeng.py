@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 # 和风天气数据api爬虫
-import scrapy, json
+import scrapy, json, pprint
 from mkspider.lib.db import session
 from mkspider.lib.models import Weather
 from mkspider.items import Weather as WeatherItem
 from mkspider.lib.common import date_operate, default_val, weather_data_check
 from mkspider.settings import PROVINCES
+from mkspider.spiders import base
 
-class WeatherHefengSpider(scrapy.Spider):
+class WeatherHefengSpider(base.BaseSpider):
     name = 'weather_hefeng'
     allowed_domains = ['free-api.heweather.com']
     start_urls = [
         'https://free-api.heweather.com/s6/weather?key=7afbc9166b37449ab42312177e47610a&location=%s']
-        
+
 
     provinces = PROVINCES
 
@@ -24,13 +25,13 @@ class WeatherHefengSpider(scrapy.Spider):
 
     # 爬虫配置，下载延迟5秒
     # custom_settings = {'DOWNLOAD_DELAY': 5}
-    
+
     def start_requests(self):
         self.index = weather_data_check(self.provinces)
         if self.index >= len(self.provinces):
             self.logger.info("今日天气数据已爬取完毕")
             return []
-    
+
         # 初始化天气类型数据
         self.init_types()
         return [scrapy.Request(self.next_url())]
@@ -60,7 +61,7 @@ class WeatherHefengSpider(scrapy.Spider):
                 high = int(item['tmp_max'])
                 low = int(item['tmp_min'])
                 base_data['wendu'] = high - round((high - low) / 2)
-            
+
             tmp = {
                 'sunrise': item['sr'],
                 'sunset': item['ss'],
@@ -72,13 +73,13 @@ class WeatherHefengSpider(scrapy.Spider):
                 'type': item['cond_txt_d'],
                 'notice': default_val(self.types, item['cond_txt_d'], json_data['lifestyle'][0]['txt']),
             }
-            
+
             forecast.append(tmp)
             i += 1
 
         base_data['city'] = json_data['basic']['location']
         base_data['forecast'] = forecast
-     
+
         weather_item = WeatherItem(**base_data)
 
         yield weather_item
@@ -87,10 +88,7 @@ class WeatherHefengSpider(scrapy.Spider):
         if self.index < len(self.provinces):
             yield scrapy.Request(self.next_url())
 
-    def closed(self, reason):
-        """ 爬虫结束时发送邮件 """
-        send_email('spider name: %s' % self.name, reason, self.logger)
-        
+
     def next_url(self):
         return self.start_urls[0] % self.provinces[self.index]
 

@@ -4,9 +4,10 @@ import scrapy, json, urllib
 from mkspider.items import Weather as WeatherItem
 from mkspider.lib.common import date_operate, default_val, weather_data_check, send_email
 from mkspider.settings  import PROVINCES
+from mkspider.spiders import base
 
 
-class WeatherSpider(scrapy.Spider):
+class WeatherSpider(base.BaseSpider):
     name = 'weather'
     allowed_domains = ['www.sojson.com']
     start_urls = ['https://www.sojson.com/open/api/weather/json.shtml?city=%s']
@@ -30,7 +31,6 @@ class WeatherSpider(scrapy.Spider):
         return [scrapy.Request(self.next_url())]
 
     def parse(self, response):
-        scrapy.shell.inspect_response(response, self)
         # 一共34个城市，最多请求50次
         self.request_count += 1
         if self.request_count >= 50:
@@ -38,15 +38,18 @@ class WeatherSpider(scrapy.Spider):
 
         json_data = json.loads(response.body)
         city = response.url.split('city=')[1]
-        # url 解码
-        city = urllib.unquote(city)
+        # url 解码, python3中使用parse,python2中使用urllib
+        if hasattr(urllib, 'parse'):
+            city = urllib.parse.unquote(city)
+        else:
+            city = urllib.unquote(city)
         if not json_data or json_data['status'] != 200:
             self.logger.error('[%s]天气信息爬取失败,重新爬取' % city)
-            
+
             # 重新爬取，设置高优先级，并且不重复过滤机制过滤
             yield scrapy.Request(response.url, priority=100, dont_filter=True)
         else:
-        
+
             self.logger.info("[%s]天气信息爬取成功" % city)
 
             weather_item = WeatherItem(
@@ -61,7 +64,7 @@ class WeatherSpider(scrapy.Spider):
             )
 
             yield weather_item
-        
+
         self.index += 1
         if self.index < len(self.provinces):
             yield scrapy.Request(self.next_url())
@@ -69,6 +72,3 @@ class WeatherSpider(scrapy.Spider):
     def next_url(self):
         return self.start_urls[0] % self.provinces[self.index]
 
-    def closed(self, reason):
-        """ 爬虫结束时发送邮件 """
-        send_email('spider name: %s' % self.name, reason, self.logger)
