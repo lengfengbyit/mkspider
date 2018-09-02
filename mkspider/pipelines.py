@@ -43,7 +43,7 @@ class MkspiderPipeline(object):
         if item['year']:
             res = session.query(AstroYear).filter_by(
                 astroid=item['astroid']).filter_by(date=item['year']['date']).first()
-            
+
             if not res:
                 item['year']['name'] = item['astroname']
                 item['year']['astroid'] = item['astroid']
@@ -51,7 +51,7 @@ class MkspiderPipeline(object):
                 astroYear = AstroYear(**item['year'])
                 session.add(astroYear)
                 session.commit()
-            
+
         if item['month']:
 
             year, month = item['month']['date'].split('-')
@@ -66,7 +66,7 @@ class MkspiderPipeline(object):
                 astroMonth = AstroMonth(**item['month'])
                 session.add(astroMonth)
                 session.commit()
-                
+
 
         if item['week'] and False:
 
@@ -78,26 +78,29 @@ class MkspiderPipeline(object):
             item['week']['start_date'] = start_date
             item['week']['end_date'] = end_date
             del item['week']['date']
-            
+
             astroWeek = AstroWeek(**item['week'])
             session.add(astroWeek)
             session.commit()
-            
+
         if item['today']:
-            
+
             res = session.query(AstroDay).filter_by(
                 astroid=item['astroid']).filter_by(date=item['today']['date']).first()
 
             item['today']['name'] = item['astroname']
             item['today']['astroid'] = item['astroid']
-            
+
             try:
+                # 判断number属性是否是数字类型
+                if not str(item['today']['number']).isdigit():
+                    item['today']['number'] = 0
                 astroDay = AstroDay(**item['today'])
                 session.add(astroDay)
                 session.commit()
             except Exception:
                 pass
-            
+
 
     def lunar_item(self, item):
         """ 农历数据存储 """
