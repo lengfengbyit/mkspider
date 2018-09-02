@@ -100,7 +100,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 # 数据库配置
-DB_CONFIG = "mysql+pymysql://toolbar:Toolbar_System+123@127.0.0.1:3306/maiku_api?charset=utf8"
+from mkspider.config import DB_CONFIG
+# DB_CONFIG = "mysql+pymysql://user:password@127.0.0.1:3306/dbname?charset=utf8"
 
 # 日志配置
 LOG_ENABLED = True
